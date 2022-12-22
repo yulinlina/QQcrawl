@@ -13,7 +13,7 @@ class QQhandle():
         self.group_name = None
         self.results =None
 
-    def Get_hwnd(self,name="2022"):
+    def Get_hwnd(self,name="QQ"):
         """
         根据窗口名查找句柄号
         :param name: 窗口名
@@ -21,11 +21,22 @@ class QQhandle():
         """
         hwnd_title = dict()
         def get_all_hwnd(hwnd, mouse):
-            if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd) and win32gui.IsWindowVisible(hwnd):
-                hwnd_title.update({win32gui.GetWindowText(hwnd):hwnd})
+            if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd):
+              hwnd_title.update({win32gui.GetWindowText(hwnd):hwnd})
         win32gui.EnumWindows(get_all_hwnd, 0)
-        print(hwnd_title)
+
         return hwnd_title.get(name)
+
+    def send_message(self,hwnd,grouptext):
+        setText(grouptext)  # 将好友名称复制到剪切
+        Open_win(hwnd)
+        win32gui.SendMessage(hwnd, 258, 22, 2080193)  # SendMessage的的参数。具体的还是详细查msdn
+        win32gui.SendMessage(hwnd, 770, 0, 0)
+        time.sleep(1.5)
+        winRect = Get_win_size(hwnd)
+        mouse_click(winRect[0] + 125, winRect[1] + 150)  # 移动到QQ搜索窗口并点击
+        mouse_click(winRect[0] + 125, winRect[1] + 150)  # 移动到QQ搜索窗口并点击
+
 
     def Get_hwnd_blurry(self,name="2022"):
         """ 根据窗口名模糊查找包含的群名，主要用于针对在一个窗口中同时打开了多个群存在多个会话的情况
@@ -42,13 +53,14 @@ class QQhandle():
 
 
         win32gui.EnumWindows(get_all_hwnd, 0)
+
         if self.handle:
             return hwnd_title.get(self.handle)
         else:
             print(f"未运行对应 {name} 进程")
             print(f"正在运行的进程为：\n {hwnd_title}")
 
-    def uppage(self,nowphwnd,count=5):
+    def uppage(self,nowphwnd,count=1):
         nowwinRect = Get_win_size(nowphwnd)
         mouse_click(nowwinRect[0] + 300, nowwinRect[1] + 380)
         Ctrl_Home()
@@ -60,7 +72,10 @@ class QQhandle():
 
 
     def crawl(self,grouptext):
-        phwnd = self.Get_hwnd_blurry("2022")  # 获取窗口句柄
+
+        qq.send_message(qq.Get_hwnd(), grouptext[0])
+        time.sleep(1.5)
+        phwnd = self.Get_hwnd_blurry(grouptext[0][:10])  # 只取前10个字符
         if phwnd != None:
             Open_win(phwnd)
             winRect = Get_win_size(phwnd)
@@ -117,19 +132,20 @@ class QQhandle():
         f.write(data)
         f.close()
 
-        print(len(information))
+        # print(len(information))
         self.name = []
         self.info_time=[]
         self.info =[]
         for info in information:
             self.check_info(info)
         length_time,length_info = len(self.info_time),len(self.info)
-        for _ in range( length_time-length_info):
-            self.info.append(None)
+        # print(length_time,length_info)
 
+        if length_time!= length_info:
+            self.name =self.name[-length_info:]
+            self.info_time = self.info_time[-length_info:]
 
-
-        print(len(self.info_time),len(self.info))
+        # print(len(self.info_time),len(self.info))
 
         data = pd.DataFrame.from_dict({"name":self.name,"time":self.info_time,"info":self.info})
         data.to_excel("results.xls")
@@ -137,6 +153,11 @@ class QQhandle():
         self.results =data.values.tolist()
 
 
+def setText(info):  #将文本复制进剪切板
+    wt.OpenClipboard()
+    wt.EmptyClipboard()
+    wt.SetClipboardData(win32con.CF_UNICODETEXT, info)
+    wt.CloseClipboard()
 
 def GetText():
     """
@@ -243,9 +264,12 @@ if __name__ =="__main__":
 
     grouptext = ["2022Fall_数据库设计_小组"]        #  需要爬取的群组 确保提前打开
     qq =QQhandle()
+
+
+
     qq.crawl(grouptext)
     result = qq.results  # 最后的列表结果
-    print(result[:10])
+    print(result[-10:])
 
 
 
