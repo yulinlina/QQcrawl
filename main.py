@@ -73,8 +73,8 @@ class QQhandle():
 
     def crawl(self,grouptext):
 
-        qq.send_message(qq.Get_hwnd(), grouptext[0])
-        time.sleep(1.5)
+        # qq.send_message(qq.Get_hwnd(), grouptext[0])
+        # time.sleep(1.5)
         phwnd = self.Get_hwnd_blurry(grouptext[0][:10])  # 只取前10个字符
         if phwnd != None:
             Open_win(phwnd)
@@ -119,10 +119,6 @@ class QQhandle():
 
             self.info_time.append(time)
             self.name.append(name)
-
-
-
-
 
 
     def save_file(self):
