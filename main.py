@@ -10,6 +10,8 @@ import re
 class QQhandle():
     def __init__(self):
         self.handle = 0
+        self.group_name = None
+        self.results =None
 
     def Get_hwnd(self,name="2022"):
         """
@@ -31,7 +33,7 @@ class QQhandle():
         :return:
         """
         hwnd_title = dict()
-
+        self.group_name = name
         def get_all_hwnd(hwnd, mouse):
             if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd) and win32gui.IsWindowVisible(hwnd):
                 hwnd_title.update({win32gui.GetWindowText(hwnd): hwnd})
@@ -124,9 +126,17 @@ class QQhandle():
         length_time,length_info = len(self.info_time),len(self.info)
         for _ in range( length_time-length_info):
             self.info.append(None)
+
+
+
         print(len(self.info_time),len(self.info))
+
         data = pd.DataFrame.from_dict({"name":self.name,"time":self.info_time,"info":self.info})
         data.to_excel("results.xls")
+        data.insert(0,'groupname',self.group_name)
+        self.results =data.values.tolist()
+
+
 
 def GetText():
     """
@@ -234,6 +244,8 @@ if __name__ =="__main__":
     grouptext = ["2022Fall_数据库设计_小组"]        #  需要爬取的群组 确保提前打开
     qq =QQhandle()
     qq.crawl(grouptext)
+    result = qq.results  # 最后的列表结果
+    print(result[:10])
 
 
 
