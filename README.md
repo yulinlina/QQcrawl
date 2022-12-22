@@ -2,12 +2,12 @@
 ## 使用方法
 运行`main.py` 即可
 ## 适用条件
-**首先得用QQ打开需要爬取的群** 【重要】
+**打开QQ即可，可以缩小在后台
 ## 爬取不同的群
 ``` python
 if __name__ =="__main__":
 
-    grouptext = ["2022Fall_数据库设计_小组"]        #  需要爬取的群组 确保提前打开
+    grouptext = ["2022Fall_数据库设计_小组"]      
     qq =QQhandle()
     qq.crawl(grouptext)
 ```
