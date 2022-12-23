@@ -11,7 +11,8 @@ class QQhandle():
     def __init__(self):
         self.handle = 0
         self.group_name = None
-        self.results =None
+        self.results =[]
+
 
     def Get_hwnd(self,name="QQ"):
         """
@@ -53,12 +54,13 @@ class QQhandle():
 
 
         win32gui.EnumWindows(get_all_hwnd, 0)
-
+        # print(hwnd_title)
         if self.handle:
             return hwnd_title.get(self.handle)
         else:
             print(f"未运行对应 {name} 进程")
             print(f"正在运行的进程为：\n {hwnd_title}")
+            return 0
 
     def uppage(self,nowphwnd,count=1):
         nowwinRect = Get_win_size(nowphwnd)
@@ -72,33 +74,40 @@ class QQhandle():
 
 
     def crawl(self,grouptext):
-
-        # qq.send_message(qq.Get_hwnd(), grouptext[0])
-        # time.sleep(1.5)
-        phwnd = self.Get_hwnd_blurry(grouptext[0][:10])  # 只取前10个字符
-        if phwnd != None:
+        """依次查询获取的群名，获取群消息记录"""
+        if phwnd:= self.Get_hwnd_blurry(grouptext[0][:10]):
             Open_win(phwnd)
-            winRect = Get_win_size(phwnd)
-            """依次查询获取的群名，获取群消息记录"""
-            for name in grouptext:
-                time.sleep(1)
-                mouse_click(winRect[0] + 120, winRect[1] + 125)  # 移动到QQ搜索窗口并点击
-                Random_Sleep()
+        else:
+            print("请打开对应QQ群")
+            return
+        winRect = Get_win_size(phwnd)
+        start = time.time()
+        for index,name in enumerate(grouptext):
+            self.get_info(name,winRect)
+            """处理后的数据存储"""
+            self.save_file(name)
+        end = time.time()
+        print(f"总计耗时： {end-start:.2f}s")
+        win32gui.CloseWindow(phwnd)
 
+    def get_info(self,name,winRect):
 
-                if  nowphwnd := self.Get_hwnd_blurry(name):
-                    print(f"{name}：窗口打开成功！")
-                else:
-                    print(f"未找到对应{name}：窗口")
-                    return
-                Open_win(nowphwnd)
-                self.uppage(nowphwnd)
+        time.sleep(1)
+        mouse_click(winRect[0] + 50, winRect[1] + 15)  # 移动到QQ搜索窗口并点击
+        setText(name)  # 将好友名称复制到剪切
+        Ctrl_V()
+        time.sleep(1.5)
+        mouse_click(winRect[0] + 50, winRect[1] + 70)  # 移动到QQ搜索窗口并点击
+        mouse_click(winRect[0] + 50, winRect[1] + 70)  # 移动到QQ搜索窗口并点击
+        time.sleep(1.5)
+        phwnd = self.Get_hwnd_blurry(name)
+      #   Open_win(nowphwnd)
+        self.uppage(phwnd)
 
-                Ctrl_A()
-                Ctrl_C()
-                win32gui.CloseWindow(nowphwnd)
-                """处理后的数据存储"""
-                self.save_file()
+        Ctrl_A()
+        Ctrl_C()
+       #  time.sleep(1)
+
 
     def check_info(self,info):
         data= info.split()
@@ -121,10 +130,10 @@ class QQhandle():
             self.name.append(name)
 
 
-    def save_file(self):
+    def save_file(self,name):
         data = GetText()
         information = re.split("\n|\r",data)
-        f = open("results.txt", "w", encoding="utf-8")
+        f = open(f"results/{name}.txt", "w", encoding="utf-8")
         f.write(data)
         f.close()
 
@@ -142,11 +151,15 @@ class QQhandle():
             self.info_time = self.info_time[-length_info:]
 
         # print(len(self.info_time),len(self.info))
+        try:
+            data = pd.DataFrame.from_dict({"name":self.name,"time":self.info_time,"info":self.info})
+            data.to_excel(f"results/{name}.xls")
+            data.insert(0,'groupname',self.group_name)
+            self.results.append(data.values.tolist())
+            print(f"{name}.xls 文件存储成功")
+        except:
+            print(f"{name}.xls 文件存储失败，正在进行重试")
 
-        data = pd.DataFrame.from_dict({"name":self.name,"time":self.info_time,"info":self.info})
-        data.to_excel("results.xls")
-        data.insert(0,'groupname',self.group_name)
-        self.results =data.values.tolist()
 
 
 def setText(info):  #将文本复制进剪切板
@@ -179,6 +192,12 @@ def Random_Sleep():
     """
     time.sleep(random.uniform(0.05, 0.1))
 
+def Ctrl_V():
+    win32api.keybd_event(17, 0, 0, 0)  # Ctrl
+    win32api.keybd_event(86, 0, 0, 0)  # V
+    win32api.keybd_event(86, 0, win32con.KEYEVENTF_KEYUP, 0)  # 释放按键
+    win32api.keybd_event(17, 0, win32con.KEYEVENTF_KEYUP, 0)
+    time.sleep(random.uniform(0.1, 0.2))
 
 def Ctrl_A():
     """
@@ -258,14 +277,14 @@ def Get_win_size(phwnd):
 
 if __name__ =="__main__":
 
-    grouptext = ["2022Fall_数据库设计_小组"]        #  需要爬取的群组 确保提前打开
+    grouptext = ["2022Fall_数据库设计_小组","形教小组","极客邦"]        #  需要爬取的群组 确保打开多个群的
     qq =QQhandle()
 
-
-
     qq.crawl(grouptext)
-    result = qq.results  # 最后的列表结果
-    print(result[-10:])
+    result1,result2,result3 = qq.results  # 最后的列表结果
+    print(result1[-10:])
+    print(result2[-10:])
+    print(result3[-10:])
 
 
 
