@@ -64,10 +64,10 @@ class QQhandle():
         nowwinRect = Get_win_size(nowphwnd)
         mouse_click(nowwinRect[0] + 300, nowwinRect[1] + 380)
         Ctrl_Home()
-        time.sleep(1)  # 刷新等待1秒
+        time.sleep(0.5)  # 刷新等待0.5秒
         for _ in range(count):
             # mouse_click(nowwinRect[0] + 270, nowwinRect[1] + 110)  # 刷新窗口
-            time.sleep(0.5)
+            time.sleep(0.1)
             win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, 200)  # 向上滑动100个单位
 
 
@@ -96,7 +96,7 @@ class QQhandle():
 
                 Ctrl_A()
                 Ctrl_C()
-
+                win32gui.CloseWindow(nowphwnd)
                 """处理后的数据存储"""
                 self.save_file()
 
